@@ -1,0 +1,4 @@
+*.amazon_similarity.npy
+*.userMajoredMatrix.npy
+*.itemsOrderedBy.npy
+*.usersPurchased.npy
