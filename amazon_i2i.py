@@ -2,6 +2,7 @@ import numpy as np
 import math
 import sys
 import time
+import os.path
 
 def cosSimilarity(v1, v2):
 	if len(v1) != len(v2):
@@ -50,7 +51,7 @@ def predict(itemsSimilarity, userRatingOnItems):
 	score = np.dot(itemsSimilarity, userRatingOnItems)
 	sim1Norm = np.linalg.norm(itemsSimilarity, ord=1)
 	if sim1Norm < EPS:
-		score = 3.0
+		score = 0
 	else:
 		score = score / sim1Norm
 	if score < 0:
@@ -59,27 +60,48 @@ def predict(itemsSimilarity, userRatingOnItems):
 		score = 5
 	return np.round(score)
 
+def trainedModelsExist(trainLabel):
+	models = [".amazon_similarity", ".userMajoredMatrix", ".itemsOrderedBy", ".usersPurchased"]
+	allExist = True
+	for model in models:
+		if not os.path.isfile(trainLabel + model + ".npy"):
+			allExist = False
+			break
+	return allExist
+
+def readTrainedModels(trainLabel):
+	similarities = np.load(trainLabel + ".amazon_similarity.npy")
+	userMajoredMatrix = np.load(trainLabel + ".userMajoredMatrix.npy")
+	itemsOrderedBy = np.load(trainLabel + ".itemsOrderedBy.npy")
+	usersPurchased = np.load(trainLabel + ".usersPurchased.npy")
+	return similarities, userMajoredMatrix, itemsOrderedBy, usersPurchased
+
 def main():
 	if len(sys.argv) < 2:
 		print("python amazon_i2i.py training_file [testing_file]")
 		return 0
 	trainFile = sys.argv[1]
-
-	# user, item, rating, time
-	reviews = np.genfromtxt(trainFile, delimiter="\t")
-
-	print("similarity calculation started at " + time.strftime("%H:%M:%S"))
-	similarities, userMajoredMatrix, itemsOrderedBy, usersPurchased = amazonSimilarity(reviews=reviews, userIndex=0, itemIndex=1, ratingIndex=2)
-	reviews = None
-
-	print
-	print("simiarity calculation ended at " + time.strftime("%H:%M:%S"))
 	trainLabel = trainFile[0:trainFile.rfind(".")]
-	np.save(trainLabel + ".amazon_similarity", similarities)
-	np.save(trainLabel + ".userMajoredMatrix", userMajoredMatrix)
-	np.save(trainLabel + ".itemsOrderedBy", itemsOrderedBy)
-	np.save(trainLabel + ".usersPurchased", usersPurchased)
-	print("file outputed at:" + time.strftime("%H:%M:%S"))
+
+	if trainedModelsExist(trainLabel):
+		print("reading files...")
+		similarities, userMajoredMatrix, itemsOrderedBy, usersPurchased = readTrainedModels(trainLabel)
+		print("files read.")
+	else:
+		# user, item, rating, time
+		reviews = np.genfromtxt(trainFile, delimiter="\t")
+
+		print("similarity calculation started at " + time.strftime("%H:%M:%S"))
+		similarities, userMajoredMatrix, itemsOrderedBy, usersPurchased = amazonSimilarity(reviews=reviews, userIndex=0, itemIndex=1, ratingIndex=2)
+		reviews = None
+
+		print
+		print("simiarity calculation ended at " + time.strftime("%H:%M:%S"))
+		np.save(trainLabel + ".amazon_similarity", similarities)
+		np.save(trainLabel + ".userMajoredMatrix", userMajoredMatrix)
+		np.save(trainLabel + ".itemsOrderedBy", itemsOrderedBy)
+		np.save(trainLabel + ".usersPurchased", usersPurchased)
+		print("file outputed at:" + time.strftime("%H:%M:%S"))
 
 	if len(sys.argv) < 3:
 		return 0
