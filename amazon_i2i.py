@@ -19,15 +19,15 @@ def cosSimilarity(v1, v2):
 
 def amazonSimilarity(reviews, userIndex, itemIndex, ratingIndex):
 	dims = np.amax(reviews, axis=0)
-	maxUser = int(dims[userIndex])
-	maxItem = int(dims[itemIndex])
+	maxUser = int(dims[userIndex] + 1)
+	maxItem = int(dims[itemIndex] + 1)
 
 	i2uMatrix = np.zeros(shape=(maxItem, maxUser))
 	itemsOrderedBy = [[] for i in range(maxUser)]
 	usersPurchased = [[] for i in range(maxItem)]
 	for review in reviews:
-		thisUser = int(review[userIndex]) - 1
-		thisItem = int(review[itemIndex]) - 1
+		thisUser = int(review[userIndex])
+		thisItem = int(review[itemIndex])
 		i2uMatrix[thisItem][thisUser] = review[ratingIndex]
 		itemsOrderedBy[thisUser].append(thisItem)
 		usersPurchased[thisItem].append(thisUser)
@@ -39,9 +39,6 @@ def amazonSimilarity(reviews, userIndex, itemIndex, ratingIndex):
 		relatedItems = set()
 		for customer in usersPurchased[i]:
 			relatedItems |= set(itemsOrderedBy[customer])
-		# for customer in usersPurchased[i]:
-		# 	relatedItems = relatedItems + itemsOrderedBy[customer]
-		# relatedItems = set(relatedItems)
 		for j in relatedItems:
 			if similarities[j][i] != 0:
 				similarities[i][j] = similarities[j][i]
@@ -52,13 +49,26 @@ def amazonSimilarity(reviews, userIndex, itemIndex, ratingIndex):
 
 	return similarities
 
-if __name__ == "__main__":
+def main():
+	if len(sys.argv) < 2:
+		print("python amazon_i2i.py training_file [testing_file]")
+		return 0
+	trainFile = sys.argv[1]
+	if len(sys.argv) >= 3:
+		testFile = sys.argv[2]
+
 	# user, item, rating, time
-	reviews = np.genfromtxt("./ml-100k/u1.base", delimiter="\t")
+	reviews = np.genfromtxt(trainingFile, delimiter="\t")
 
 	print("start at: " + str(time.time()))
 	similarities = amazonSimilarity(reviews=reviews, userIndex=0, itemIndex=1, ratingIndex=2)
+	reviews = None
 	print()
 	print("simiarity calculation ended: " + str(time.time()))
 	np.save("amazon_similarity", similarities)
 	print("file outputed at:" + str(time.time()))
+
+	return 0
+
+if __name__ == "__main__":
+	main()
