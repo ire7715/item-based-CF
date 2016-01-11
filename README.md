@@ -6,7 +6,7 @@ The dataset is provided by [MovieLens](grouplens.org/datasets/movielens/)
 ----
 
 Execution:
-  python amazon_i2i.py traningFile [testingFile]
+  python amazon_i2i.py traningFile [testingFile]  
   e.g. python amazon_i2.py ./ml-100k/u1.base ./ml-100k/u1.test
 
 Giving a training file is necessary and it will generate you the following files:
