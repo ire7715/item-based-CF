@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import math
 import sys
 import time
@@ -8,30 +9,32 @@ def cosSimilarity(v1, v2):
   if len(v1) != len(v2):
     return 0
 
-  sop = np.dot(v1, v2)
-  v1SquareSum = np.linalg.norm(v1, 2)
-  v2SquareSum = np.linalg.norm(v2, 2)
+  sop = v1.dot(v2)
+  v1SquareSum = np.sqrt(np.square(v1).sum())
+  v2SquareSum = np.sqrt(np.square(v2).sum())
 
   return sop / (v1SquareSum * v2SquareSum)
 
-def amazonSimilarity(reviews, userIndex, itemIndex, ratingIndex):
-  dims = np.amax(reviews, axis=0)
-  maxUser = int(dims[userIndex] + 1)
-  maxItem = int(dims[itemIndex] + 1)
+def amazonSimilarity(reviews):
+  maxUser = int(reviews.user.max() + 1)
+  maxItem = int(reviews.item.max() + 1)
 
-  i2uMatrix = np.zeros(shape=(maxItem, maxUser))
+  # pandas is column major
+  i2uMatrix = pd.DataFrame(0, index=np.arange(maxUser), columns=np.arange(maxItem))
+  # i2uMatrix = np.zeros(shape=(maxItem, maxUser))
   itemsOrderedBy = [[] for i in range(maxUser)]
   usersPurchased = [[] for i in range(maxItem)]
-  for review in reviews:
-    thisUser = int(review[userIndex])
-    thisItem = int(review[itemIndex])
-    i2uMatrix[thisItem][thisUser] = review[ratingIndex]
+  for index, review in reviews.iterrows():
+    thisUser = int(review["user"])
+    thisItem = int(review["item"])
+    i2uMatrix[thisItem][thisUser] = review["rating"]
     itemsOrderedBy[thisUser].append(thisItem)
     usersPurchased[thisItem].append(thisUser)
 
   print("preprocessing is done, calculating similarity...")
 
-  similarities = np.zeros(shape=(maxItem, maxItem))
+  similarities = pd.DataFrame(0, index=np.arange(maxItem), columns=np.arange(maxItem))
+  # similarities = np.zeros(shape=(maxItem, maxItem))
   for i in range(maxItem):
     relatedItems = set()
     for customer in usersPurchased[i]:
@@ -41,10 +44,8 @@ def amazonSimilarity(reviews, userIndex, itemIndex, ratingIndex):
         similarities[i][j] = similarities[j][i]
       else:
         similarities[i][j] = cosSimilarity(i2uMatrix[i], i2uMatrix[j])
-    if i % 50:
-      sys.stdout.write("#")
 
-  return similarities, np.transpose(i2uMatrix), itemsOrderedBy, usersPurchased
+  return similarities, i2uMatrix.transpose(), itemsOrderedBy, usersPurchased
 
 def predict(itemsSimilarity, userRatingOnItems):
   EPS = 1e-7
@@ -61,17 +62,20 @@ def predict(itemsSimilarity, userRatingOnItems):
   return np.round(score)
 
 def trainedModelsExist(trainLabel):
-  models = [".amazon_similarity", ".userMajoredMatrix", ".itemsOrderedBy", ".usersPurchased"]
+  models = [".amazon_similarity", ".userMajoredMatrix", ".itemsOrderedBy.npy", ".usersPurchased.npy"]
+  # models = [".amazon_similarity.npy", ".userMajoredMatrix.npy", ".itemsOrderedBy.npy", ".usersPurchased.npy"]
   allExist = True
   for model in models:
-    if not os.path.isfile(trainLabel + model + ".npy"):
+    if not os.path.isfile(trainLabel + model):
       allExist = False
       break
   return allExist
 
 def readTrainedModels(trainLabel):
-  similarities = np.load(trainLabel + ".amazon_similarity.npy")
-  userMajoredMatrix = np.load(trainLabel + ".userMajoredMatrix.npy")
+  # similarities = np.load(trainLabel + ".amazon_similarity.npy")
+  # userMajoredMatrix = np.load(trainLabel + ".userMajoredMatrix.npy")
+  similarities = pd.read_pickle(trainLabel + ".amazon_similarity")
+  userMajoredMatrix = pd.read_pickle(trainLabel + ".userMajoredMatrix")
   itemsOrderedBy = np.load(trainLabel + ".itemsOrderedBy.npy")
   usersPurchased = np.load(trainLabel + ".usersPurchased.npy")
   return similarities, userMajoredMatrix, itemsOrderedBy, usersPurchased
@@ -90,16 +94,18 @@ def main():
     print("files read.")
   else:
     # user, item, rating, time
-    reviews = np.genfromtxt(trainFile, delimiter=delimiter)
+    reviews = pd.read_csv(trainFile, delimiter=delimiter, header=None, names=["user", "item", "rating", "time"])
 
     print("similarity calculation started at " + time.strftime("%H:%M:%S"))
-    similarities, userMajoredMatrix, itemsOrderedBy, usersPurchased = amazonSimilarity(reviews=reviews, userIndex=0, itemIndex=1, ratingIndex=2)
+    similarities, userMajoredMatrix, itemsOrderedBy, usersPurchased = amazonSimilarity(reviews=reviews)
     reviews = None
 
     print
-    print("simiarity calculation ended at " + time.strftime("%H:%M:%S"))
-    np.save(trainLabel + ".amazon_similarity", similarities)
-    np.save(trainLabel + ".userMajoredMatrix", userMajoredMatrix)
+    print("similarity calculation ended at " + time.strftime("%H:%M:%S"))
+    similarities.to_pickle(trainLabel + ".amazon_similarity")
+    userMajoredMatrix.to_pickle(trainLabel + ".userMajoredMatrix")
+    # np.save(trainLabel + ".amazon_similarity", similarities)
+    # np.save(trainLabel + ".userMajoredMatrix", userMajoredMatrix)
     np.save(trainLabel + ".itemsOrderedBy", itemsOrderedBy)
     np.save(trainLabel + ".usersPurchased", usersPurchased)
     print("file outputed at:" + time.strftime("%H:%M:%S"))
