@@ -77,10 +77,11 @@ def readTrainedModels(trainLabel):
   return similarities, userMajoredMatrix, itemsOrderedBy, usersPurchased
 
 def main():
-  if len(sys.argv) < 2:
-    print("python amazon_i2i.py training_file [testing_file]")
+  if len(sys.argv) < 3:
+    print("python amazon_i2i.py delimiter training_file [testing_file]")
     return 0
-  trainFile = sys.argv[1]
+  delimiter = sys.argv[1]
+  trainFile = sys.argv[2]
   trainLabel = trainFile[0:trainFile.rfind(".")]
 
   if trainedModelsExist(trainLabel):
@@ -89,7 +90,7 @@ def main():
     print("files read.")
   else:
     # user, item, rating, time
-    reviews = np.genfromtxt(trainFile, delimiter="\t")
+    reviews = np.genfromtxt(trainFile, delimiter=delimiter)
 
     print("similarity calculation started at " + time.strftime("%H:%M:%S"))
     similarities, userMajoredMatrix, itemsOrderedBy, usersPurchased = amazonSimilarity(reviews=reviews, userIndex=0, itemIndex=1, ratingIndex=2)
@@ -105,8 +106,8 @@ def main():
 
   if len(sys.argv) < 3:
     return 0
-  testFile = sys.argv[2]
-  testReviews = np.genfromtxt(testFile, delimiter="\t")
+  testFile = sys.argv[3]
+  testReviews = np.genfromtxt(testFile, delimiter=delimiter)
 
   print("prediction started at " + time.strftime("%H:%M:%S"))
   itemMajoredMatrix = None
