@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import math
 import sys
 import time
 import os.path
@@ -108,7 +107,7 @@ def main():
     # np.save(trainLabel + ".userMajoredMatrix", userMajoredMatrix)
     np.save(trainLabel + ".itemsOrderedBy", itemsOrderedBy)
     np.save(trainLabel + ".usersPurchased", usersPurchased)
-    print("file outputed at:" + time.strftime("%H:%M:%S"))
+    print("file outputed at " + time.strftime("%H:%M:%S"))
 
   if len(sys.argv) < 4:
     return 0
