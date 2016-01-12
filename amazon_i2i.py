@@ -104,7 +104,7 @@ def main():
     np.save(trainLabel + ".usersPurchased", usersPurchased)
     print("file outputed at:" + time.strftime("%H:%M:%S"))
 
-  if len(sys.argv) < 3:
+  if len(sys.argv) < 4:
     return 0
   testFile = sys.argv[3]
   testReviews = np.genfromtxt(testFile, delimiter=delimiter)
