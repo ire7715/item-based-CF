@@ -106,7 +106,7 @@ def main():
   userMean = np.zeros(len(userMajoredMatrix))
   itemMean = np.zeros(len(userMajoredMatrix[0]))
   globalMean = None
-  mse = 0
+  mae = 0
   confusionMatrix = np.zeros(shape=(2, 2), dtype=np.int16)
   scoreDistribution = [0, 0, 0, 0, 0, 0]
   for review in testReviews:
@@ -145,11 +145,11 @@ def main():
         if globalMean is None:
           globalMean = np.round(np.mean(np.extract(userMajoredMatrix > 0, userMajoredMatrix)))
         score = globalMean
-    mse += (actualScore - score) ** 2
+    mae += np.fabs(actualScore - score)
     confusionMatrix[actualScore >= 3][score >= 3] += 1
     scoreDistribution[int(score)] += 1
   mse /= len(testReviews)
-  print("MSE: " + str(mse))
+  print("MAE: " + str(mse))
   print("Confusion Matrix: ")
   print(confusionMatrix)
   print("Score distribution: ")
