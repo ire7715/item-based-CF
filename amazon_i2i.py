@@ -4,14 +4,7 @@ import time
 import os.path
 
 def cosSimilarity(v1, v2):
-  if len(v1) != len(v2):
-    return 0
-
-  sop = np.dot(v1, v2)
-  v1SquareSum = np.linalg.norm(v1, 2)
-  v2SquareSum = np.linalg.norm(v2, 2)
-
-  return sop / (v1SquareSum * v2SquareSum)
+  return v1.dot(v2) / np.sqrt(np.square(v1).sum()) / np.sqrt(np.square(v2).sum())
 
 def amazonSimilarity(reviews, userIndex, itemIndex, ratingIndex):
   dims = np.amax(reviews, axis=0)
