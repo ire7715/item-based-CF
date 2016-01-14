@@ -36,6 +36,7 @@ def amazonSimilarity(reviews, userIndex, itemIndex, ratingIndex):
     if i % 50:
       sys.stdout.write("#")
 
+  print
   return similarities, np.transpose(i2uMatrix), itemsOrderedBy, usersPurchased
 
 def predict(itemsSimilarity, userRatingOnItems):
@@ -88,7 +89,6 @@ def main():
     similarities, userMajoredMatrix, itemsOrderedBy, usersPurchased = amazonSimilarity(reviews=reviews, userIndex=0, itemIndex=1, ratingIndex=2)
     reviews = None
 
-    print
     print("simiarity calculation ended at " + time.strftime("%H:%M:%S"))
     np.save(trainLabel + ".amazon_similarity", similarities)
     np.save(trainLabel + ".userMajoredMatrix", userMajoredMatrix)
